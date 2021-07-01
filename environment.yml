@@ -1,4 +1,4 @@
-name: stactools-package
+name: stactools-aafc-landuse
 channels:
   - conda-forge
   - defaults
