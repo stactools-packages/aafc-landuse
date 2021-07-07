@@ -40,9 +40,9 @@ def create_aafclanduse_command(cli):
         Returns:
             Callable
         """
-        metadata = utils.get_metadata(metadata)
+        # metadata = utils.get_metadata(metadata)
 
-        collection = stac.create_collection(metadata)
+        # collection = stac.create_collection(metadata)
 
     @aafclanduse.command(
         "create-item",
