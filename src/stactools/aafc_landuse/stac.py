@@ -40,7 +40,7 @@ def create_item(metadata: dict, dst: str, cog_href: str) -> pystac.Item:
 
     utc = pytz.utc
 
-    year = re.search("\d{4}", item_id).group()
+    year = re.search(r"\d{4}", item_id).group()
     dataset_datetime = utc.localize(datetime.strptime(year, "%Y"))
 
     end_datetime = dataset_datetime + relativedelta(months=12)
