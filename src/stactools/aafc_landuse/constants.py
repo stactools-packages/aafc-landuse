@@ -20,7 +20,8 @@ DESCRIPTION = """The 1990, 2000 and 2010 Land Use (LU) maps cover all areas of C
 LANDUSE_PROVIDER = Provider(
     name="Natural Resources Canada | Ressources naturelles Canada",
     roles=["producer", "processor", "host"],
-    url="https://open.canada.ca/data/en/dataset/18e3ef1a-497c-40c6-8326-aac1a34a0dec",
+    url=
+    "https://open.canada.ca/data/en/dataset/18e3ef1a-497c-40c6-8326-aac1a34a0dec",
 )
 
 JSONLD_HREF = (

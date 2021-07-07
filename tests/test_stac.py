@@ -9,7 +9,6 @@ from stactools.aafc_landuse import utils
 from stactools.aafc_landuse import cog
 from stactools.aafc_landuse import stac
 
-
 TEST_ITEM = "https://www.agr.gc.ca/atlas/data_donnees/lcv/aafcLand_Use/tif/2010/IMG_AAFC_LANDUSE_Z07_2010.zip"  # noqa
 
 
@@ -21,8 +20,9 @@ class StacTest(unittest.TestCase):
             with utils.AssetManager(TEST_ITEM) as asset:
                 asset_tif = asset.path
                 cog_path = os.path.join(
-                    tmp_dir, os.path.splitext(os.path.basename(asset_tif))[0] + "_cog.tif"
-                )
+                    tmp_dir,
+                    os.path.splitext(os.path.basename(asset_tif))[0] +
+                    "_cog.tif")
                 cog.create_cog(asset_tif, cog_path, dry_run=False)
 
             # Create stac item

@@ -93,7 +93,10 @@ def create_item(metadata: dict, dst: str, cog_href: str) -> pystac.Item:
     item.add_asset(
         "cog",
         pystac.Asset(
-            href=cog_href, media_type=pystac.MediaType.COG, roles=["data"], title=title,
+            href=cog_href,
+            media_type=pystac.MediaType.COG,
+            roles=["data"],
+            title=title,
         ),
     )
 
@@ -115,8 +118,7 @@ def create_collection(metadata: dict):
     end_datetime = end_datetime
 
     extent_geometry = json.loads(
-        metadata.get("geom_metadata").get("locn:geometry")[0].get("@value")
-    )
+        metadata.get("geom_metadata").get("locn:geometry")[0].get("@value"))
     bbox = geometry.Polygon(extent_geometry.get("coordinates")[0]).bounds
 
     collection = pystac.Collection(

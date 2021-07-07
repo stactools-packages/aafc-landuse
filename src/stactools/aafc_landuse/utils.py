@@ -5,7 +5,6 @@ from uuid import uuid1
 from tempfile import gettempdir
 import json
 import requests
-from requests.api import get
 
 
 def get_metadata(metadata_url: str) -> dict:
@@ -24,10 +23,12 @@ def get_metadata(metadata_url: str) -> dict:
                 jsonld_response = json.load(f)
 
         geom_metadata = [
-            i for i in jsonld_response.get("@graph") if "locn:geometry" in i.keys()
+            i for i in jsonld_response.get("@graph")
+            if "locn:geometry" in i.keys()
         ][0]
         description_metadata = [
-            i for i in jsonld_response.get("@graph") if "dct:description" in i.keys()
+            i for i in jsonld_response.get("@graph")
+            if "dct:description" in i.keys()
         ][0]
 
         metadata = {
@@ -44,7 +45,6 @@ def get_metadata(metadata_url: str) -> dict:
 class AssetManager:
     """Manage an asset as a local file, or temporary local file if a url is provided
     """
-
     def __init__(self, src: str):
         if os.path.splitext(src)[1].lower() not in [".tif", ".zip"]:
             raise ValueError("Asset is expected to be .tif or .zip")

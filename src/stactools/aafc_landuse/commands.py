@@ -11,18 +11,19 @@ logger = logging.getLogger(__name__)
 
 
 def create_aafclanduse_command(cli):
-    """Creates a command line utility for working with 
+    """Creates a command line utility for working with
     AAFC Land Use categorical rasters
     """
-
     @cli.group(
-        "aafclanduse", short_help=("Commands for working with AAFC Land Use data"),
+        "aafclanduse",
+        short_help=("Commands for working with AAFC Land Use data"),
     )
     def aafclanduse():
         pass
 
     @aafclanduse.command(
-        "create-collection", short_help="Creates a STAC collection from AAFC Land Use metadata",
+        "create-collection",
+        short_help="Creates a STAC collection from AAFC Land Use metadata",
     )
     @click.option(
         "-m",
@@ -44,7 +45,8 @@ def create_aafclanduse_command(cli):
         collection = stac.create_collection(metadata)
 
     @aafclanduse.command(
-        "create-item", short_help="Create a STAC item from an AAFC Land Use tif",
+        "create-item",
+        short_help="Create a STAC item from an AAFC Land Use tif",
     )
     @click.argument("src")
     @click.argument("dst")
@@ -55,7 +57,7 @@ def create_aafclanduse_command(cli):
         default=JSONLD_HREF,
     )
     def create_item_command(src: str, dst: str, metadata: str):
-        """Creates a STAC Item from an AAFC Land Use raster and 
+        """Creates a STAC Item from an AAFC Land Use raster and
         accompanying metadata file.
 
         Args:
@@ -71,8 +73,8 @@ def create_aafclanduse_command(cli):
         with utils.AssetManager(src) as asset:
             asset_tif = asset.path
             cog_path = os.path.join(
-                dst, os.path.splitext(os.path.basename(asset_tif))[0] + "_cog.tif"
-            )
+                dst,
+                os.path.splitext(os.path.basename(asset_tif))[0] + "_cog.tif")
             cog.create_cog(asset_tif, cog_path, dry_run=False)
 
         # Create stac item
