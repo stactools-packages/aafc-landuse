@@ -15,7 +15,7 @@ LICENSE_LINK = Link(
     title="Open Government Licence - Canada",
 )
 
-DESCRIPTION = """The 1990, 2000 and 2010 Land Use (LU) maps cover all areas of Canada south of 600N at a spatial resolution of 30 metres. The LU classes follow the protocol of the Intergovernmental Panel on Climate Change (IPCC) and consist of: Forest, Water, Cropland, Grassland, Settlement and Otherland."""
+DESCRIPTION = """The 1990, 2000 and 2010 Land Use (LU) maps cover all areas of Canada south of 60 degrees N at a spatial resolution of 30 metres. The LU classes follow the protocol of the Intergovernmental Panel on Climate Change (IPCC) and consist of: Forest, Water, Cropland, Grassland, Settlement and Otherland."""
 
 LANDUSE_PROVIDER = Provider(
     name="Natural Resources Canada | Ressources naturelles Canada",
