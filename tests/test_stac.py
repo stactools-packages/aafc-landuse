@@ -13,7 +13,25 @@ TEST_ITEM = "https://www.agr.gc.ca/atlas/data_donnees/lcv/aafcLand_Use/tif/2010/
 
 
 class StacTest(unittest.TestCase):
+    def test_create_collection(self):
+        with TemporaryDirectory() as tmp_dir:
+            metadata = utils.get_metadata(JSONLD_HREF)
+
+            # Create stac collection
+            json_path = os.path.join(tmp_dir, "test.json")
+            stac.create_collection(metadata, json_path)
+
+            jsons = [p for p in os.listdir(tmp_dir) if p.endswith(".json")]
+            self.assertEqual(len(jsons), 1)
+
+            collection_path = os.path.join(tmp_dir, jsons[0])
+
+            collection = pystac.read_file(collection_path)
+
+            collection.validate()
+
     def test_create_item(self):
+        # create_cog is also tested here as it is needed for the item
         with TemporaryDirectory() as tmp_dir:
             metadata = utils.get_metadata(JSONLD_HREF)
 
@@ -39,4 +57,4 @@ class StacTest(unittest.TestCase):
 
             item = pystac.read_file(item_path)
 
-        item.validate()
+            item.validate()

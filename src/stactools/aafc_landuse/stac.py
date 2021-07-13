@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import re
@@ -21,19 +22,67 @@ from shapely import geometry
 logger = logging.getLogger(__name__)
 
 
-def create_item(metadata: dict, dst: str, cog_href: str) -> pystac.Item:
+def create_collection(metadata: dict, metadata_url: str) -> pystac.Collection:
+    """Create a STAC Collection using a jsonld file provided by AAFC
+    and save it to a destination.
+
+    The metadata dict may be created using `utils.get_metadata`
+
+    Args:
+        metadata (dict): metadata parsed from jsonld
+        metadata_url (str): Location to save the output STAC Collection json
+
+    Returns:
+        pystac.Collection: pystac collection object
+    """
+
+    dataset_datetime = pytz.utc.localize(datetime.strptime("1990", "%Y"))
+
+    end_datetime = dataset_datetime + relativedelta(years=10)
+
+    start_datetime = dataset_datetime
+    end_datetime = end_datetime
+
+    extent_token = metadata.get("geom_metadata").get("locn:geometry")[0].get(
+        "@value")
+    extent_geometry = json.loads(extent_token)
+    bbox = geometry.Polygon(extent_geometry.get("coordinates")[0]).bounds
+
+    collection = pystac.Collection(
+        id=LANDUSE_ID,
+        title=LANDUSE_TITLE,
+        description=DESCRIPTION,
+        providers=[LANDUSE_PROVIDER],
+        license=LICENSE,
+        extent=pystac.Extent(
+            pystac.SpatialExtent(bbox),
+            pystac.TemporalExtent([start_datetime, end_datetime]),
+        ),
+        catalog_type=pystac.CatalogType.RELATIVE_PUBLISHED,
+    )
+    collection.add_link(LICENSE_LINK)
+
+    collection.set_self_href(metadata_url)
+
+    collection.save_object()
+
+    return collection
+
+
+def create_item(metadata: dict, metadata_url: str,
+                cog_href: str) -> pystac.Item:
     """Creates a STAC item for a 1990, 2000 and 2010 Canada Land Use dataset.
 
     Args:
         metadata (dict): Contents of the AAFC Land Use jsonld metadata
-        dst (str): Destination path for the STAC item json file
-        cog_href (str): Path to the respective COG asset
+        metadata_url (str): Output path for the STAC json
+        cog_href (str): Location of associated COG asset
 
     Returns:
         pystac.Item: STAC Item object.
     """
 
-    item_id = ".".join(cog_href.split(".")[:-1]).split("/")[-1]
+    item_id = ".".join(metadata_url.split(".")[:-1]).split("/")[-1]
 
     title = item_id
     description = metadata.get("description_metadata").get("dct:description")
@@ -83,7 +132,7 @@ def create_item(metadata: dict, dst: str, cog_href: str) -> pystac.Item:
     item.add_asset(
         "json",
         pystac.Asset(
-            href=dst,
+            href=cog_href,
             media_type=pystac.MediaType.JSON,
             roles=["metadata"],
             title="JSON metadata",
@@ -100,39 +149,8 @@ def create_item(metadata: dict, dst: str, cog_href: str) -> pystac.Item:
         ),
     )
 
-    item.set_self_href(dst)
+    item.set_self_href(metadata_url)
 
     item.save_object()
 
     return item
-
-
-def create_collection(metadata: dict):
-    # Creates a STAC collection for a 1990, 2000 and 2010 Canada Land Use data dataset
-
-    dataset_datetime = pytz.utc.localize(datetime.strptime('1990', "%Y"))
-
-    end_datetime = dataset_datetime + relativedelta(years=10)
-
-    start_datetime = dataset_datetime
-    end_datetime = end_datetime
-
-    extent_geometry = json.loads(
-        metadata.get("geom_metadata").get("locn:geometry")[0].get("@value"))
-    bbox = geometry.Polygon(extent_geometry.get("coordinates")[0]).bounds
-
-    collection = pystac.Collection(
-        id=LANDUSE_ID,
-        title=LANDUSE_TITLE,
-        description=DESCRIPTION,
-        providers=[LANDUSE_PROVIDER],
-        license=LICENSE,
-        extent=pystac.Extent(
-            pystac.SpatialExtent(bbox),
-            pystac.TemporalExtent([start_datetime, end_datetime]),
-        ),
-        catalog_type=pystac.CatalogType.RELATIVE_PUBLISHED,
-    )
-    collection.add_link(LICENSE_LINK)
-
-    return collection

@@ -13,9 +13,27 @@ class CreateItemTest(CliTestCase):
     def create_subcommand_functions(self):
         return [create_aafclanduse_command]
 
+    def test_create_collection(self):
+        with TemporaryDirectory() as tmp_dir:
+            result = self.run_command(
+                ["aafclanduse", "create-collection", "-d", tmp_dir])
+            self.assertEqual(result.exit_code,
+                             0,
+                             msg="\n{}".format(result.output))
+
+            jsons = [p for p in os.listdir(tmp_dir) if p.endswith(".json")]
+            self.assertEqual(len(jsons), 1)
+
+            collection = pystac.read_file(os.path.join(tmp_dir, jsons[0]))
+
+            collection.validate()
+
     def test_create_item(self):
         with TemporaryDirectory() as tmp_dir:
-            cmd = ['aafclanduse', 'create-item', TEST_ITEM, tmp_dir]
+            cmd = [
+                'aafclanduse', 'create-item', "--source", TEST_ITEM,
+                "--destination", tmp_dir
+            ]
             self.run_command(cmd)
 
             cogs = [p for p in os.listdir(tmp_dir) if p.endswith('_cog.tif')]
