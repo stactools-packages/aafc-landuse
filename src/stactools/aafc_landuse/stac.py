@@ -2,7 +2,6 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import re
 import pytz
-import json
 import logging
 from stactools.aafc_landuse.constants import (
     LANDUSE_ID,
@@ -42,9 +41,7 @@ def create_collection(metadata: dict, metadata_url: str) -> pystac.Collection:
     start_datetime = dataset_datetime
     end_datetime = end_datetime
 
-    extent_token = metadata.get("geom_metadata").get("locn:geometry")[0].get(
-        "@value")
-    extent_geometry = json.loads(extent_token)
+    extent_geometry = metadata['geom_metadata']
     bbox = geometry.Polygon(extent_geometry.get("coordinates")[0]).bounds
 
     collection = pystac.Collection(

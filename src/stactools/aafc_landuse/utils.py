@@ -22,10 +22,19 @@ def get_metadata(metadata_url: str) -> dict:
             with open(metadata_url) as f:
                 jsonld_response = json.load(f)
 
-        geom_metadata = [
-            i for i in jsonld_response.get("@graph")
-            if "locn:geometry" in i.keys()
-        ][0]
+        geom_obj = next(
+            (x["locn:geometry"] for x in jsonld_response["@graph"]
+             if "locn:geometry" in x.keys()),
+            [],
+        )
+        geom_metadata = next(
+            (json.loads(x["@value"])
+             for x in geom_obj if x["@type"].startswith("http")),
+            None,
+        )
+        if not geom_metadata:
+            raise ValueError("Unable to parse geometry metadata from jsonld")
+
         description_metadata = [
             i for i in jsonld_response.get("@graph")
             if "dct:description" in i.keys()
@@ -80,15 +89,15 @@ class AssetManager:
             str: Path to the first .tif encountered
         """
         if os.path.splitext(src)[1].lower() == ".zip":
-            with ZipFile(src, 'r') as zf:
+            with ZipFile(src, "r") as zf:
                 zf.extractall(self.wkdir)
 
             for p, _, contents in os.walk(self.wkdir):
                 for c in contents:
-                    if os.path.splitext(c)[1].lower() == '.tif':
+                    if os.path.splitext(c)[1].lower() == ".tif":
                         return os.path.join(p, c)
 
-            raise FileNotFoundError('No .tif files in asset source')
+            raise FileNotFoundError("No .tif files in asset source")
         else:
             return src
 
