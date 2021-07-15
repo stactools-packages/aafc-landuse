@@ -41,8 +41,8 @@ def create_collection(metadata: dict, metadata_url: str) -> pystac.Collection:
     start_datetime = dataset_datetime
     end_datetime = end_datetime
 
-    extent_geometry = metadata['geom_metadata']
-    bbox = geometry.Polygon(extent_geometry.get("coordinates")[0]).bounds
+    extent_geometry = metadata["geom_metadata"]
+    bbox = list(geometry.Polygon(extent_geometry.get("coordinates")[0]).bounds)
 
     collection = pystac.Collection(
         id=LANDUSE_ID,
@@ -51,7 +51,7 @@ def create_collection(metadata: dict, metadata_url: str) -> pystac.Collection:
         providers=[LANDUSE_PROVIDER],
         license=LICENSE,
         extent=pystac.Extent(
-            pystac.SpatialExtent(bbox),
+            pystac.SpatialExtent([bbox]),
             pystac.TemporalExtent([start_datetime, end_datetime]),
         ),
         catalog_type=pystac.CatalogType.RELATIVE_PUBLISHED,
