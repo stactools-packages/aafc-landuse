@@ -1,17 +1,42 @@
-# stactools-package
+# stactools aafc-landuse
 
-Template repostitory for [stactools](https://github.com/stac-utils/stactools) packages.
+## Agriculture and Agri-Food Canada Land Use
 
-## How to use
+### Description
 
-1. Clone this template repository as your package name, e.g. `landsat`.
-   This name should be short, memorable, and a valid Python package name (i.e. it shouldn't start with a number, etc).
-   It can, however, include a hyphen, in which case the name for Python imports will be the underscored version, e.g. `landsat-8` goes to `stactools.landsat_8`.
-   Your name will be used on PyPI to publish the package in the stactools namespace, e.g. `stactools-landsat`.
-2. Change into the top-level directory of your package and run `scripts/rename`.
-   This will update _most_ of the files in the repository with your new package name.
-   You'll have to manually update `setup.cfg` and `README.md`. 
-3. Update `setup.cfg` with your package name, description, and such.
-4. Rewrite this README to provide information about how to use your package.
-5. Update the LICENSE with your company's information (or whomever holds the copyright).
-6. Run `sphinx-quickstart` in the `docs` directory to create the documentation template.
+The Land Use (LU) maps cover all areas of Canada south of 60&deg;N at a spatial resolution of 30 metres. The LU classes follow the protocol of the Intergovernmental Panel on Climate Change (IPCC) and consist of: Forest, Water, Cropland, Grassland, Settlement and Otherland.
+
+The Land Use (LU) maps were developed in response to a need for explicit, high-accuracy, high-resolution land use data to meet AAFC’s commitments in international reporting, especially for the annual National Inventory Report (NIR) to the United Nations Framework Convention on Climate Change (UNFCCC), the Agri-Environmental program of the Organization for Economic Co-operation and Development (OECD) and the FAOSTAT component of the Food and Agriculture Organization of the United Nations (FAO).
+
+### Usage
+
+1. As a python module
+
+```python
+from stactools.aafc_landuse.constants import JSONLD_HREF
+from stactools.aafc_landuse import utils, cog, stac
+
+
+# Read metadata
+metadata = utils.get_metadata(JSONLD_HREF)
+
+# Create a STAC Collection
+json_path = os.path.join(tmp_dir, "/path/to/aafc-landuse.json")
+stac.create_collection(metadata, json_path)
+
+# Create a COG
+cog.create_cog("/path/to/local.tif", "/path/to/cog.tif")
+
+# Create a STAC Item
+stac.create_item(metadata, "/path/to/item.json", "/path/to/cog.tif")
+```
+
+2. Using the CLI
+
+```bash
+# Create a STAC Collection
+stac aafclanduse create-collection -d "/path/to/directory"
+
+# Create a STAC Item and COG - this can be done using remote or local .tif or .zip assets
+stac aafclanduse create-item -s "https://www.agr.gc.ca/atlas/data_donnees/lcv/aafcLand_Use/tif/2010/IMG_AAFC_LANDUSE_Z07_2010.zip" -d "/path/to/directory"
+```
