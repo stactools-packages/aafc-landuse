@@ -1,3 +1,5 @@
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/stactools-packages/aafc-landuse/main?filepath=docs/installation_and_basic_usage.ipynb)
+
 # stactools aafc-landuse
 
 ## Agriculture and Agri-Food Canada Land Use
