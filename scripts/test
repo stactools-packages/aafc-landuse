@@ -24,7 +24,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
             scripts/* \
             *.py ./**/*.py \
             *.md \
-            docs/*.rst docs/**/*.rst \
+            docs/*.rst docs/**/*.rst
 
         coverage run --source=${COVERAGE_DIRS} -m unittest discover tests/
         coverage xml
