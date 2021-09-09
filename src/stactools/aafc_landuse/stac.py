@@ -1,7 +1,7 @@
 import logging
 import re
 from datetime import datetime
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 import fsspec
 import pystac
@@ -26,9 +26,8 @@ from stactools.aafc_landuse.constants import (CLASSIFICATION_VALUES,
 logger = logging.getLogger(__name__)
 
 
-def create_collection(
-        metadata: dict,
-        metadata_url: Optional[str] = JSONLD_HREF) -> pystac.Collection:
+def create_collection(metadata: dict,
+                      metadata_url: str = JSONLD_HREF) -> pystac.Collection:
     """Create a STAC Collection using a jsonld file provided by AAFC
     and save it to a destination.
 
@@ -46,7 +45,7 @@ def create_collection(
 
     end_datetime = dataset_datetime + relativedelta(years=10)
 
-    start_datetime = dataset_datetime
+    start_datetime = dataset_datetime  # type: Optional[datetime]
     end_datetime = end_datetime
 
     extent_geometry = metadata["geom_metadata"]
@@ -60,7 +59,7 @@ def create_collection(
         license=LICENSE,
         extent=pystac.Extent(
             pystac.SpatialExtent([bbox]),
-            pystac.TemporalExtent([start_datetime, end_datetime]),
+            pystac.TemporalExtent([[start_datetime, end_datetime]]),
         ),
         catalog_type=pystac.CatalogType.RELATIVE_PUBLISHED,
     )
@@ -144,7 +143,7 @@ def create_collection(
 
 def create_item(
     metadata: dict,
-    metadata_url: Optional[str] = JSONLD_HREF,
+    metadata_url: str = JSONLD_HREF,
     cog_href: Optional[str] = None,
 ) -> pystac.Item:
     """Creates a STAC item for a 1990, 2000 and 2010 Canada Land Use dataset.
@@ -161,11 +160,15 @@ def create_item(
     item_id = ".".join(metadata_url.split(".")[:-1]).split("/")[-1]
 
     title = item_id
-    description = metadata.get("description_metadata").get("dct:description")
+    desc_metadata = metadata.get("description_metadata")
+    assert isinstance(desc_metadata, Dict)
+    description = desc_metadata.get("dct:description")
 
     utc = pytz.utc
 
-    year = re.search(r"\d{4}", item_id).group()
+    match = re.search(r"\d{4}", item_id)
+    assert match
+    year = match.group()
     dataset_datetime = utc.localize(datetime.strptime(year, "%Y"))
 
     end_datetime = dataset_datetime + relativedelta(months=12)

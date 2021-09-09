@@ -2,6 +2,7 @@ import json
 import os
 import shutil
 from tempfile import gettempdir
+from typing import Any
 from uuid import uuid1
 from zipfile import ZipFile
 
@@ -27,7 +28,7 @@ def get_metadata(metadata_url: str) -> dict:
             (x["locn:geometry"] for x in jsonld_response["@graph"]
              if "locn:geometry" in x.keys()),
             [],
-        )
+        )  # type: Any
         geom_metadata = next(
             (json.loads(x["@value"])
              for x in geom_obj if x["@type"].startswith("http")),
