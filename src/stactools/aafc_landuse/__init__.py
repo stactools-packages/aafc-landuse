@@ -1,4 +1,5 @@
 import stactools.core
+
 from stactools.aafc_landuse.stac import create_collection, create_item
 
 __all__ = ["create_collection", "create_item"]

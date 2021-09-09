@@ -1,9 +1,10 @@
+import json
 import os
 import shutil
-from zipfile import ZipFile
-from uuid import uuid1
 from tempfile import gettempdir
-import json
+from uuid import uuid1
+from zipfile import ZipFile
+
 import requests
 
 

@@ -1,10 +1,11 @@
-import click
 import logging
 import os
 
-from stactools.aafc_landuse.constants import JSONLD_HREF
+import click
 from stactools.core.utils.convert import cogify
+
 from stactools.aafc_landuse import stac, utils
+from stactools.aafc_landuse.constants import JSONLD_HREF
 
 logger = logging.getLogger(__name__)
 
