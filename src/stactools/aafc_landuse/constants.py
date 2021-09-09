@@ -29,3 +29,21 @@ JSONLD_HREF = (
 )
 
 LANDUSE_FTP = "https://www.agr.gc.ca/atlas/data_donnees/lcv/aafcLand_Use/tif/"
+
+CLASSIFICATION_VALUES = {
+    11: "Unclassified",
+    21: "Settlement",
+    25: "Roads",
+    31: "Water",
+    41: "Forest",
+    42: "Forest Wetland",
+    45: "Trees",
+    46: "Treed Wetland",
+    51: "Cropland",
+    61: "Grassland Managed",
+    62: "Grassland Unmanaged",
+    71: "Wetland",
+    73: "Wetland Shrub",
+    74: "Wetland Herb",
+    91: "Other land",
+}

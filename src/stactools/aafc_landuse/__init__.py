@@ -1,8 +1,7 @@
 import stactools.core
 from stactools.aafc_landuse.stac import create_collection, create_item
-from stactools.aafc_landuse.cog import create_cog
 
-__all__ = [create_collection, create_item, create_cog]
+__all__ = ["create_collection", "create_item"]
 
 stactools.core.use_fsspec()
 

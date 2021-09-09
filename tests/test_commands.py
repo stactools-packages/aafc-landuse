@@ -2,7 +2,9 @@ import os
 from tempfile import TemporaryDirectory
 
 import pystac
+from stactools.aafc_landuse.constants import JSONLD_HREF
 
+from stactools.aafc_landuse.utils import AssetManager
 from stactools.aafc_landuse.commands import create_aafclanduse_command
 from stactools.testing import CliTestCase
 
@@ -28,22 +30,76 @@ class CreateItemTest(CliTestCase):
 
             collection.validate()
 
-    def test_create_item(self):
+    def test_create_cog_and_item(self):
         with TemporaryDirectory() as tmp_dir:
-            cmd = [
-                'aafclanduse', 'create-item', "--source", TEST_ITEM,
-                "--destination", tmp_dir
-            ]
-            self.run_command(cmd)
+            # Create a COG and item
+            with AssetManager(TEST_ITEM) as src:
+                cog_path = src.path[:-4] + "_cog.tif"
 
-            cogs = [p for p in os.listdir(tmp_dir) if p.endswith('_cog.tif')]
-            self.assertEqual(len(cogs), 1)
+                result = self.run_command(
+                    ["aafclanduse", "create-cog", src.path, cog_path])
+                self.assertEqual(result.exit_code,
+                                 0,
+                                 msg="\n{}".format(result.output))
+                self.assertTrue(os.path.isfile(cog_path))
 
-            jsons = [p for p in os.listdir(tmp_dir) if p.endswith('.json')]
+                cmd = [
+                    "aafclanduse",
+                    "create-item",
+                    "-d",
+                    tmp_dir,
+                    "-c",
+                    cog_path,
+                    "-m",
+                    JSONLD_HREF,
+                ]
+                result = self.run_command(cmd)
+                self.assertEqual(result.exit_code,
+                                 0,
+                                 msg="\n{}".format(result.output))
+
+            # Validate item
+            jsons = [p for p in os.listdir(tmp_dir) if p.endswith(".json")]
             self.assertEqual(len(jsons), 1)
 
             item_path = os.path.join(tmp_dir, jsons[0])
 
             item = pystac.read_file(item_path)
 
-        item.validate()
+            asset = item.assets["landuse"]
+
+            self.assertIn("data", asset.roles)
+
+            # Projection Extension
+            self.assertIn("proj:epsg", asset.extra_fields)
+            self.assertIn("proj:bbox", asset.extra_fields)
+            self.assertIn("proj:transform", asset.extra_fields)
+            self.assertIn("proj:shape", asset.extra_fields)
+            self.assertIn("proj:bbox", item.properties)
+            self.assertIn("proj:transform", item.properties)
+            self.assertIn("proj:shape", item.properties)
+
+            # File Extension
+            self.assertIn("file:size", asset.extra_fields)
+            self.assertIn("file:values", asset.extra_fields)
+            self.assertGreater(len(asset.extra_fields["file:values"]), 0)
+
+            # Raster Extension
+            self.assertIn("raster:bands", asset.extra_fields)
+            self.assertEqual(len(asset.extra_fields["raster:bands"]), 1)
+            self.assertIn("nodata", asset.extra_fields["raster:bands"][0])
+            self.assertIn("sampling", asset.extra_fields["raster:bands"][0])
+            self.assertIn("data_type", asset.extra_fields["raster:bands"][0])
+            self.assertIn("spatial_resolution",
+                          asset.extra_fields["raster:bands"][0])
+
+            # Label Extension
+            self.assertIn("labels", asset.roles)
+            self.assertIn("labels-raster", asset.roles)
+            self.assertIn("label:type", asset.extra_fields)
+            self.assertIn("label:tasks", asset.extra_fields)
+            self.assertIn("label:properties", asset.extra_fields)
+            self.assertIn("label:description", asset.extra_fields)
+            self.assertIn("label:classes", asset.extra_fields)
+
+            item.validate()
