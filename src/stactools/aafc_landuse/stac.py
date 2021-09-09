@@ -1,35 +1,27 @@
-from datetime import datetime
-from dateutil.relativedelta import relativedelta
-from typing import Optional, List, Any
-import re
-import fsspec
-import pytz
 import logging
-from stactools.aafc_landuse.constants import (
-    JSONLD_HREF,
-    LANDUSE_ID,
-    LANDUSE_EPSG,
-    LANDUSE_TITLE,
-    DESCRIPTION,
-    LANDUSE_PROVIDER,
-    LICENSE,
-    LICENSE_LINK,
-    CLASSIFICATION_VALUES,
-)
+import re
+from datetime import datetime
+from typing import Any, List, Optional
 
+import fsspec
 import pystac
-from pystac.extensions.item_assets import AssetDefinition, ItemAssetsExtension
-from pystac.extensions.file import FileExtension
-from pystac.extensions.projection import ProjectionExtension
-from pystac.extensions.raster import DataType, RasterBand, RasterExtension, Sampling
-from pystac.extensions.label import (
-    LabelClasses,
-    LabelExtension,
-    LabelTask,
-    LabelType,
-)
+import pytz
 import rasterio
+from dateutil.relativedelta import relativedelta
+from pystac.extensions.file import FileExtension
+from pystac.extensions.item_assets import AssetDefinition, ItemAssetsExtension
+from pystac.extensions.label import (LabelClasses, LabelExtension, LabelTask,
+                                     LabelType)
+from pystac.extensions.projection import ProjectionExtension
+from pystac.extensions.raster import (DataType, RasterBand, RasterExtension,
+                                      Sampling)
 from shapely import geometry
+
+from stactools.aafc_landuse.constants import (CLASSIFICATION_VALUES,
+                                              DESCRIPTION, JSONLD_HREF,
+                                              LANDUSE_EPSG, LANDUSE_ID,
+                                              LANDUSE_PROVIDER, LANDUSE_TITLE,
+                                              LICENSE, LICENSE_LINK)
 
 logger = logging.getLogger(__name__)
 

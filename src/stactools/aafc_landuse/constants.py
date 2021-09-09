@@ -1,8 +1,7 @@
 # flake8: noqa
 
 from pyproj import CRS
-from pystac import Provider
-from pystac import Link
+from pystac import Link, Provider
 
 LANDUSE_ID = "aafc-landuse"
 LANDUSE_EPSG = 3978

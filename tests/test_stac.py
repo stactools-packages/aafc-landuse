@@ -1,8 +1,7 @@
 import unittest
 
+from stactools.aafc_landuse import stac, utils
 from stactools.aafc_landuse.constants import JSONLD_HREF
-from stactools.aafc_landuse import utils
-from stactools.aafc_landuse import stac
 
 
 class StacTest(unittest.TestCase):
