@@ -1,7 +1,7 @@
 # flake8: noqa
 
 from pyproj import CRS
-from pystac import Link, Provider
+from pystac import Link, Provider, ProviderRole
 
 LANDUSE_ID = "aafc-landuse"
 LANDUSE_EPSG = 3978
@@ -18,7 +18,12 @@ DESCRIPTION = """The 1990, 2000 and 2010 Land Use (LU) maps cover all areas of C
 
 LANDUSE_PROVIDER = Provider(
     name="Natural Resources Canada | Ressources naturelles Canada",
-    roles=["producer", "processor", "host"],
+    roles=[
+        ProviderRole.HOST,
+        ProviderRole.LICENSOR,
+        ProviderRole.PROCESSOR,
+        ProviderRole.PRODUCER,
+    ],
     url=
     "https://open.canada.ca/data/en/dataset/18e3ef1a-497c-40c6-8326-aac1a34a0dec",
 )
