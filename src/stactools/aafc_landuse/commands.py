@@ -2,9 +2,8 @@ import logging
 import os
 
 import click
-from stactools.core.utils.convert import cogify
 
-from stactools.aafc_landuse import stac, utils
+from stactools.aafc_landuse import cog, stac, utils
 from stactools.aafc_landuse.constants import JSONLD_HREF
 
 logger = logging.getLogger(__name__)
@@ -28,13 +27,13 @@ def create_aafclanduse_command(cli):
     @click.argument("source")
     @click.argument("destination")
     def create_cog_command(source: str, destination: str):
-        """Create a COG from an AAFC Land Use .tif
+        """Create a COG from an AAFC Land Use source .tif
 
         Args:
             source (str): Source .tif
-            destination (str): Output destination for COG
+            destination (str): Output directory for COG
         """
-        cogify(source, destination, ["-co", "compress=LZW"])
+        cog.create_cog(source, destination)
 
     @aafclanduse.command(
         "create-collection",
@@ -93,8 +92,11 @@ def create_aafclanduse_command(cli):
         default=JSONLD_HREF,
     )
     def create_item_command(destination: str, cog: str, metadata: str):
-        """Creates a STAC Item from an AAFC Land Use raster and
+        """Creates a STAC Item from a cogified AAFC Land Use raster and
         accompanying metadata file.
+
+        :Note: The item title is parsed from the cog file name, which should be
+        created using the `create-cog` command prior to creating an item
 
         Args:
             destination (str): Directory where a COG and STAC item json will be created
@@ -105,6 +107,8 @@ def create_aafclanduse_command(cli):
         """
         # Collect metadata and create item
         jsonld_metadata = utils.get_metadata(metadata)
+        jsonld_metadata["title"] = os.path.basename(cog)[:-4]
+
         item = stac.create_item(jsonld_metadata, metadata, cog)
 
         # Set the href, save, and validate

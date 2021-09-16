@@ -1,7 +1,7 @@
 import logging
 import re
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, List, Optional
 
 import fsspec
 import pystac
@@ -157,19 +157,24 @@ def create_item(
         pystac.Item: STAC Item object.
     """
 
-    item_id = ".".join(metadata_url.split(".")[:-1]).split("/")[-1]
+    title = metadata.get("title", None)
 
-    title = item_id
-    desc_metadata = metadata.get("description_metadata")
-    assert isinstance(desc_metadata, Dict)
+    if not title:
+        raise KeyError('Attribute "title" missing from metadata')
+
+    desc_metadata = metadata["description_metadata"]
+    if not isinstance(desc_metadata, dict):
+        raise ValueError('Expected a dictionary of description metadata')
+
     description = desc_metadata.get("dct:description")
 
-    utc = pytz.utc
+    # Parse the year from the title
+    match = re.search(r"\d{4}", title)
+    if not match:
+        raise ValueError("No year found in title")
 
-    match = re.search(r"\d{4}", item_id)
-    assert match
     year = match.group()
-    dataset_datetime = utc.localize(datetime.strptime(year, "%Y"))
+    dataset_datetime = pytz.utc.localize(datetime.strptime(year, "%Y"))
 
     end_datetime = dataset_datetime + relativedelta(months=12)
 
@@ -188,7 +193,7 @@ def create_item(
 
     # Create item
     item = pystac.Item(
-        id=item_id,
+        id=title,
         geometry=extent_geometry,
         bbox=bbox,
         datetime=dataset_datetime,
@@ -274,16 +279,5 @@ def create_item(
         cog_asset_projection.bbox = item_projection.bbox
         cog_asset_projection.transform = item_projection.transform
         cog_asset_projection.shape = item_projection.shape
-
-        # Complete the label Extension
-        cog_asset.extra_fields["label:type"] = item_label.label_type
-        cog_asset.extra_fields["label:tasks"] = item_label.label_tasks
-        cog_asset.extra_fields[
-            "label:properties"] = item_label.label_properties
-        cog_asset.extra_fields[
-            "label:description"] = item_label.label_description
-        cog_asset.extra_fields["label:classes"] = [
-            item_label.label_classes[0].to_dict()
-        ]
 
     return item

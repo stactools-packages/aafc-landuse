@@ -34,13 +34,17 @@ class CreateItemTest(CliTestCase):
         with TemporaryDirectory() as tmp_dir:
             # Create a COG and item
             with AssetManager(TEST_ITEM) as src:
-                cog_path = src.path[:-4] + "_cog.tif"
 
                 result = self.run_command(
-                    ["aafclanduse", "create-cog", src.path, cog_path])
+                    ["aafclanduse", "create-cog", src.path, tmp_dir])
                 self.assertEqual(result.exit_code,
                                  0,
                                  msg="\n{}".format(result.output))
+
+                cog_path = os.path.join(
+                    tmp_dir,
+                    os.path.basename(src.path)[:-4] + "_cog.tif")
+
                 self.assertTrue(os.path.isfile(cog_path))
 
                 cmd = [
@@ -96,10 +100,5 @@ class CreateItemTest(CliTestCase):
             # Label Extension
             self.assertIn("labels", asset.roles)
             self.assertIn("labels-raster", asset.roles)
-            self.assertIn("label:type", asset.extra_fields)
-            self.assertIn("label:tasks", asset.extra_fields)
-            self.assertIn("label:properties", asset.extra_fields)
-            self.assertIn("label:description", asset.extra_fields)
-            self.assertIn("label:classes", asset.extra_fields)
 
             item.validate()
