@@ -1,7 +1,7 @@
 import logging
 import re
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, List, Optional
 
 import fsspec
 import pystac
@@ -17,7 +17,6 @@ from pystac.extensions.raster import (DataType, RasterBand, RasterExtension,
                                       Sampling)
 from shapely import geometry
 
-from stactools.core.utils.convert import cogify
 from stactools.aafc_landuse.constants import (CLASSIFICATION_VALUES,
                                               DESCRIPTION, JSONLD_HREF,
                                               LANDUSE_EPSG, LANDUSE_ID,

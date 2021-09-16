@@ -1,6 +1,7 @@
 import unittest
 
 from pystac.utils import datetime_to_str
+
 from stactools.aafc_landuse import stac, utils
 from stactools.aafc_landuse.constants import JSONLD_HREF
 
@@ -64,9 +65,8 @@ class StacTest(unittest.TestCase):
 
         self.assertEqual("IMG_AAFC_LANDUSE_Z07_2010", item.id)
         self.assertEqual("IMG_AAFC_LANDUSE_Z07_2010", item.properties["title"])
-        self.assertEqual(
-            "2010-01-01T00:00:00Z", datetime_to_str(item.common_metadata.start_datetime)
-        )
+        self.assertEqual("2010-01-01T00:00:00Z",
+                         datetime_to_str(item.common_metadata.start_datetime))
 
         self.assertIn("metadata", item.assets)
 

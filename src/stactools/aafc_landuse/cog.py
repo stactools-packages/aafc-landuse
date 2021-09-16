@@ -17,8 +17,8 @@ def create_cog(source: str, destination: str):
     match = re.search(r"\d{4}", cog_name)
     if not match:
         raise ValueError(
-            "The source .tif should originate from the source AAFC data so a year may be extracted from the name"
-        )
+            "The source .tif should originate from the source AAFC " +
+            "data so a year may be extracted from the name")
 
     if match.group() not in ["1990", "2000", "2010"]:
         raise ValueError("Expected one of 1990, 2000, or 2010")

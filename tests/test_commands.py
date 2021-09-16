@@ -18,9 +18,10 @@ class CreateItemTest(CliTestCase):
     def test_create_collection(self):
         with TemporaryDirectory() as tmp_dir:
             result = self.run_command(
-                ["aafclanduse", "create-collection", "-d", tmp_dir]
-            )
-            self.assertEqual(result.exit_code, 0, msg="\n{}".format(result.output))
+                ["aafclanduse", "create-collection", "-d", tmp_dir])
+            self.assertEqual(result.exit_code,
+                             0,
+                             msg="\n{}".format(result.output))
 
             jsons = [p for p in os.listdir(tmp_dir) if p.endswith(".json")]
             self.assertEqual(len(jsons), 1)
@@ -35,13 +36,14 @@ class CreateItemTest(CliTestCase):
             with AssetManager(TEST_ITEM) as src:
 
                 result = self.run_command(
-                    ["aafclanduse", "create-cog", src.path, tmp_dir]
-                )
-                self.assertEqual(result.exit_code, 0, msg="\n{}".format(result.output))
+                    ["aafclanduse", "create-cog", src.path, tmp_dir])
+                self.assertEqual(result.exit_code,
+                                 0,
+                                 msg="\n{}".format(result.output))
 
                 cog_path = os.path.join(
-                    tmp_dir, os.path.basename(src.path)[:-4] + "_cog.tif"
-                )
+                    tmp_dir,
+                    os.path.basename(src.path)[:-4] + "_cog.tif")
 
                 self.assertTrue(os.path.isfile(cog_path))
 
@@ -56,7 +58,9 @@ class CreateItemTest(CliTestCase):
                     JSONLD_HREF,
                 ]
                 result = self.run_command(cmd)
-                self.assertEqual(result.exit_code, 0, msg="\n{}".format(result.output))
+                self.assertEqual(result.exit_code,
+                                 0,
+                                 msg="\n{}".format(result.output))
 
             # Validate item
             jsons = [p for p in os.listdir(tmp_dir) if p.endswith(".json")]
@@ -90,7 +94,8 @@ class CreateItemTest(CliTestCase):
             self.assertIn("nodata", asset.extra_fields["raster:bands"][0])
             self.assertIn("sampling", asset.extra_fields["raster:bands"][0])
             self.assertIn("data_type", asset.extra_fields["raster:bands"][0])
-            self.assertIn("spatial_resolution", asset.extra_fields["raster:bands"][0])
+            self.assertIn("spatial_resolution",
+                          asset.extra_fields["raster:bands"][0])
 
             # Label Extension
             self.assertIn("labels", asset.roles)
