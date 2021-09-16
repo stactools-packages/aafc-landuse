@@ -1,5 +1,6 @@
 import unittest
 
+from pystac.utils import datetime_to_str
 from stactools.aafc_landuse import stac, utils
 from stactools.aafc_landuse.constants import JSONLD_HREF
 
@@ -10,7 +11,7 @@ class StacTest(unittest.TestCase):
 
         # Create stac collection
         collection = stac.create_collection(metadata)
-        collection.set_self_href('mock-path')
+        collection.set_self_href("mock-path")
 
         item_asset = collection.extra_fields["item_assets"]["landuse"]
         summaries = collection.summaries.to_dict()
@@ -49,11 +50,23 @@ class StacTest(unittest.TestCase):
         collection.validate()
 
     def test_create_item(self):
+        """Create a test item
+
+        :Note: `cog` is an optional parameter and is tested separately in `test_commands`
+
+        """
         metadata = utils.get_metadata(JSONLD_HREF)
+        metadata["title"] = "IMG_AAFC_LANDUSE_Z07_2010"
 
         # Create stac item
         item = stac.create_item(metadata, JSONLD_HREF)
-        item.set_self_href('mock-path')
+        item.set_self_href("mock-path")
+
+        self.assertEqual("IMG_AAFC_LANDUSE_Z07_2010", item.id)
+        self.assertEqual("IMG_AAFC_LANDUSE_Z07_2010", item.properties["title"])
+        self.assertEqual(
+            "2010-01-01T00:00:00Z", datetime_to_str(item.common_metadata.start_datetime)
+        )
 
         self.assertIn("metadata", item.assets)
 

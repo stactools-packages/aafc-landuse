@@ -18,10 +18,9 @@ class CreateItemTest(CliTestCase):
     def test_create_collection(self):
         with TemporaryDirectory() as tmp_dir:
             result = self.run_command(
-                ["aafclanduse", "create-collection", "-d", tmp_dir])
-            self.assertEqual(result.exit_code,
-                             0,
-                             msg="\n{}".format(result.output))
+                ["aafclanduse", "create-collection", "-d", tmp_dir]
+            )
+            self.assertEqual(result.exit_code, 0, msg="\n{}".format(result.output))
 
             jsons = [p for p in os.listdir(tmp_dir) if p.endswith(".json")]
             self.assertEqual(len(jsons), 1)
@@ -34,13 +33,16 @@ class CreateItemTest(CliTestCase):
         with TemporaryDirectory() as tmp_dir:
             # Create a COG and item
             with AssetManager(TEST_ITEM) as src:
-                cog_path = src.path[:-4] + "_cog.tif"
 
                 result = self.run_command(
-                    ["aafclanduse", "create-cog", src.path, cog_path])
-                self.assertEqual(result.exit_code,
-                                 0,
-                                 msg="\n{}".format(result.output))
+                    ["aafclanduse", "create-cog", src.path, tmp_dir]
+                )
+                self.assertEqual(result.exit_code, 0, msg="\n{}".format(result.output))
+
+                cog_path = os.path.join(
+                    tmp_dir, os.path.basename(src.path)[:-4] + "_cog.tif"
+                )
+
                 self.assertTrue(os.path.isfile(cog_path))
 
                 cmd = [
@@ -54,9 +56,7 @@ class CreateItemTest(CliTestCase):
                     JSONLD_HREF,
                 ]
                 result = self.run_command(cmd)
-                self.assertEqual(result.exit_code,
-                                 0,
-                                 msg="\n{}".format(result.output))
+                self.assertEqual(result.exit_code, 0, msg="\n{}".format(result.output))
 
             # Validate item
             jsons = [p for p in os.listdir(tmp_dir) if p.endswith(".json")]
@@ -90,16 +90,10 @@ class CreateItemTest(CliTestCase):
             self.assertIn("nodata", asset.extra_fields["raster:bands"][0])
             self.assertIn("sampling", asset.extra_fields["raster:bands"][0])
             self.assertIn("data_type", asset.extra_fields["raster:bands"][0])
-            self.assertIn("spatial_resolution",
-                          asset.extra_fields["raster:bands"][0])
+            self.assertIn("spatial_resolution", asset.extra_fields["raster:bands"][0])
 
             # Label Extension
             self.assertIn("labels", asset.roles)
             self.assertIn("labels-raster", asset.roles)
-            self.assertIn("label:type", asset.extra_fields)
-            self.assertIn("label:tasks", asset.extra_fields)
-            self.assertIn("label:properties", asset.extra_fields)
-            self.assertIn("label:description", asset.extra_fields)
-            self.assertIn("label:classes", asset.extra_fields)
 
             item.validate()
