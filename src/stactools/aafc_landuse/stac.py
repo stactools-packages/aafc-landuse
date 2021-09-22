@@ -18,16 +18,15 @@ from pystac.extensions.raster import (DataType, RasterBand, RasterExtension,
 from shapely import geometry
 
 from stactools.aafc_landuse.constants import (CLASSIFICATION_VALUES,
-                                              DESCRIPTION, JSONLD_HREF,
-                                              LANDUSE_EPSG, LANDUSE_ID,
-                                              LANDUSE_PROVIDER, LANDUSE_TITLE,
-                                              LICENSE, LICENSE_LINK)
+                                              DESCRIPTION, LANDUSE_EPSG,
+                                              LANDUSE_ID, LANDUSE_PROVIDER,
+                                              LANDUSE_TITLE, LICENSE,
+                                              LICENSE_LINK)
 
 logger = logging.getLogger(__name__)
 
 
-def create_collection(metadata: dict,
-                      metadata_url: str = JSONLD_HREF) -> pystac.Collection:
+def create_collection(metadata: dict, metadata_url: str) -> pystac.Collection:
     """Create a STAC Collection using a jsonld file provided by AAFC
     and save it to a destination.
 
@@ -35,7 +34,7 @@ def create_collection(metadata: dict,
 
     Args:
         metadata (dict): metadata parsed from jsonld
-        metadata_url (str, optional): Location of metadata
+        metadata_url (str): Location of metadata
 
     Returns:
         pystac.Collection: pystac collection object
@@ -143,14 +142,14 @@ def create_collection(metadata: dict,
 
 def create_item(
     metadata: dict,
-    metadata_url: str = JSONLD_HREF,
+    metadata_url: str,
     cog_href: Optional[str] = None,
 ) -> pystac.Item:
     """Creates a STAC item for a 1990, 2000 and 2010 Canada Land Use dataset.
 
     Args:
         metadata (dict): Contents of the AAFC Land Use jsonld metadata
-        metadata_url (str, optional): Output path for the STAC metadata json
+        metadata_url (str): Output path for the STAC metadata json
         cog_href (str, optional): Location of associated COG asset
 
     Returns:

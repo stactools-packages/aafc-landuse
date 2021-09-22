@@ -5,10 +5,7 @@ import pystac
 from stactools.testing import CliTestCase
 
 from stactools.aafc_landuse.commands import create_aafclanduse_command
-from stactools.aafc_landuse.constants import JSONLD_HREF
-from stactools.aafc_landuse.utils import AssetManager
-
-TEST_ITEM = "https://www.agr.gc.ca/atlas/data_donnees/lcv/aafcLand_Use/tif/2010/IMG_AAFC_LANDUSE_Z07_2010.zip"  # noqa
+from tests import test_data
 
 
 class CreateItemTest(CliTestCase):
@@ -18,7 +15,7 @@ class CreateItemTest(CliTestCase):
     def test_create_collection(self):
         with TemporaryDirectory() as tmp_dir:
             result = self.run_command(
-                ["aafclanduse", "create-collection", "-d", tmp_dir])
+                ["aafclanduse", "create-collection", tmp_dir])
             self.assertEqual(result.exit_code,
                              0,
                              msg="\n{}".format(result.output))
@@ -31,36 +28,35 @@ class CreateItemTest(CliTestCase):
             collection.validate()
 
     def test_create_cog_and_item(self):
+        test_path = test_data.get_path("data-files")
+        test_tif = next((os.path.join(test_path, d)
+                         for d in os.listdir(test_path)
+                         if d.lower().endswith(".tif")))
+
         with TemporaryDirectory() as tmp_dir:
             # Create a COG and item
-            with AssetManager(TEST_ITEM) as src:
+            result = self.run_command(
+                ["aafclanduse", "create-cog", test_tif, tmp_dir])
+            self.assertEqual(result.exit_code,
+                             0,
+                             msg="\n{}".format(result.output))
 
-                result = self.run_command(
-                    ["aafclanduse", "create-cog", src.path, tmp_dir])
-                self.assertEqual(result.exit_code,
-                                 0,
-                                 msg="\n{}".format(result.output))
+            cog_path = os.path.join(
+                tmp_dir,
+                os.path.basename(test_tif)[:-4] + "_cog.tif")
 
-                cog_path = os.path.join(
-                    tmp_dir,
-                    os.path.basename(src.path)[:-4] + "_cog.tif")
+            self.assertTrue(os.path.isfile(cog_path))
 
-                self.assertTrue(os.path.isfile(cog_path))
-
-                cmd = [
-                    "aafclanduse",
-                    "create-item",
-                    "-d",
-                    tmp_dir,
-                    "-c",
-                    cog_path,
-                    "-m",
-                    JSONLD_HREF,
-                ]
-                result = self.run_command(cmd)
-                self.assertEqual(result.exit_code,
-                                 0,
-                                 msg="\n{}".format(result.output))
+            cmd = [
+                "aafclanduse",
+                "create-item",
+                tmp_dir,
+                cog_path,
+            ]
+            result = self.run_command(cmd)
+            self.assertEqual(result.exit_code,
+                             0,
+                             msg="\n{}".format(result.output))
 
             # Validate item
             jsons = [p for p in os.listdir(tmp_dir) if p.endswith(".json")]

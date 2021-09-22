@@ -9,48 +9,50 @@ from zipfile import ZipFile
 import requests
 
 
-def get_metadata(metadata_url: str) -> dict:
+def get_metadata(metadata_url: str = None) -> dict:
     """Gets metadata from a jsonld published by AAFC
     Args:
-        metadata_url (str): url to get metadata from.
+        metadata_url (str, optional): Remote metadata href. If not specified it
+        will be loaded from assets/metadata.jsonld
     Returns:
         dict: AAFC Land Use Metadata.
     """
-    if metadata_url.endswith(".jsonld"):
-        if metadata_url.startswith("http"):
-            metadata_response = requests.get(metadata_url)
-            jsonld_response = metadata_response.json()
-        else:
-            with open(metadata_url) as f:
-                jsonld_response = json.load(f)
+    if metadata_url:
+        if not metadata_url.lower().endswith(".jsonld"):
+            # only jsonld support.
+            raise NotImplementedError()
 
-        geom_obj = next(
-            (x["locn:geometry"] for x in jsonld_response["@graph"]
-             if "locn:geometry" in x.keys()),
-            [],
-        )  # type: Any
-        geom_metadata = next(
-            (json.loads(x["@value"])
-             for x in geom_obj if x["@type"].startswith("http")),
-            None,
-        )
-        if not geom_metadata:
-            raise ValueError("Unable to parse geometry metadata from jsonld")
+        metadata_response = requests.get(metadata_url)
+        jsonld_response = metadata_response.json()
 
-        description_metadata = [
-            i for i in jsonld_response.get("@graph")
-            if "dct:description" in i.keys()
-        ][0]
-
-        metadata = {
-            "geom_metadata": geom_metadata,
-            "description_metadata": description_metadata,
-        }
-
-        return metadata
     else:
-        # only jsonld support.
-        raise NotImplementedError()
+        with open('./assets/metadata.jsonld') as f:
+            jsonld_response = json.load(f)
+
+    geom_obj = next(
+        (x["locn:geometry"]
+         for x in jsonld_response["@graph"] if "locn:geometry" in x.keys()),
+        [],
+    )  # type: Any
+    geom_metadata = next(
+        (json.loads(x["@value"])
+         for x in geom_obj if x["@type"].startswith("http")),
+        None,
+    )
+    if not geom_metadata:
+        raise ValueError("Unable to parse geometry metadata from jsonld")
+
+    description_metadata = [
+        i for i in jsonld_response.get("@graph")
+        if "dct:description" in i.keys()
+    ][0]
+
+    metadata = {
+        "geom_metadata": geom_metadata,
+        "description_metadata": description_metadata,
+    }
+
+    return metadata
 
 
 class AssetManager:

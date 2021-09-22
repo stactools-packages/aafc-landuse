@@ -28,10 +28,6 @@ LANDUSE_PROVIDER = Provider(
     "https://open.canada.ca/data/en/dataset/18e3ef1a-497c-40c6-8326-aac1a34a0dec",
 )
 
-JSONLD_HREF = (
-    "https://open.canada.ca/data/en/dataset/18e3ef1a-497c-40c6-8326-aac1a34a0dec.jsonld"
-)
-
 LANDUSE_FTP = "https://www.agr.gc.ca/atlas/data_donnees/lcv/aafcLand_Use/tif/"
 
 CLASSIFICATION_VALUES = {
