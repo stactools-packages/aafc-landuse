@@ -8,6 +8,8 @@ from zipfile import ZipFile
 
 import requests
 
+from stactools.aafc_landuse import data_dir
+
 
 def get_metadata(metadata_url: str = None) -> dict:
     """Gets metadata from a jsonld published by AAFC
@@ -26,7 +28,7 @@ def get_metadata(metadata_url: str = None) -> dict:
         jsonld_response = metadata_response.json()
 
     else:
-        with open('./assets/metadata.jsonld') as f:
+        with open(os.path.join(data_dir, "metadata.jsonld")) as f:
             jsonld_response = json.load(f)
 
     geom_obj = next(

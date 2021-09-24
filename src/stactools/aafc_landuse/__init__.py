@@ -1,7 +1,12 @@
+import os
+
 import stactools.core
 
 from stactools.aafc_landuse.cog import create_cog
 from stactools.aafc_landuse.stac import create_collection, create_item
+
+data_dir = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "data-files"))
 
 __all__ = ["create_collection", "create_item", "create_cog"]
 
