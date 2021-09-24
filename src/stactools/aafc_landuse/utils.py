@@ -4,9 +4,12 @@ import shutil
 from tempfile import gettempdir
 from typing import Any
 from uuid import uuid1
+from functools import reduce
 from zipfile import ZipFile
 
 import requests
+
+from stactools.aafc_landuse import data_dir
 
 
 def get_metadata(metadata_url: str = None) -> dict:
@@ -26,25 +29,26 @@ def get_metadata(metadata_url: str = None) -> dict:
         jsonld_response = metadata_response.json()
 
     else:
-        with open('./assets/metadata.jsonld') as f:
+        with open(os.path.join(data_dir, "metadata.jsonld")) as f:
             jsonld_response = json.load(f)
 
     geom_obj = next(
-        (x["locn:geometry"]
-         for x in jsonld_response["@graph"] if "locn:geometry" in x.keys()),
+        (
+            x["locn:geometry"]
+            for x in jsonld_response["@graph"]
+            if "locn:geometry" in x.keys()
+        ),
         [],
     )  # type: Any
     geom_metadata = next(
-        (json.loads(x["@value"])
-         for x in geom_obj if x["@type"].startswith("http")),
+        (json.loads(x["@value"]) for x in geom_obj if x["@type"].startswith("http")),
         None,
     )
     if not geom_metadata:
         raise ValueError("Unable to parse geometry metadata from jsonld")
 
     description_metadata = [
-        i for i in jsonld_response.get("@graph")
-        if "dct:description" in i.keys()
+        i for i in jsonld_response.get("@graph") if "dct:description" in i.keys()
     ][0]
 
     metadata = {
@@ -58,6 +62,7 @@ def get_metadata(metadata_url: str = None) -> dict:
 class AssetManager:
     """Manage an asset as a local file, or temporary local file if a url is provided
     """
+
     def __init__(self, src: str):
         if os.path.splitext(src)[1].lower() not in [".tif", ".zip"]:
             raise ValueError("Asset is expected to be .tif or .zip")
