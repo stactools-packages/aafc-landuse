@@ -2,7 +2,7 @@ import logging
 import os
 import re
 from datetime import datetime, timezone
-from typing import Any, List
+from typing import Any, List, Optional
 
 import fsspec
 import pystac
@@ -15,6 +15,7 @@ from pystac.extensions.raster import (DataType, RasterBand, RasterExtension,
                                       Sampling)
 from pystac.link import Link
 from pystac.provider import Provider, ProviderRole
+from stactools.core.io import ReadHrefModifier
 
 from stactools.aafc_landuse.constants import (CLASSIFICATION_VALUES, KEYWORDS,
                                               LANDUSE_ID, METADATA_URL,
@@ -156,9 +157,9 @@ def create_collection(metadata_url: str = METADATA_URL,
 
 
 def create_item(
-    cog_href: str,
-    metadata_url: str = METADATA_URL,
-) -> pystac.Item:
+        cog_href: str,
+        metadata_url: str = METADATA_URL,
+        cog_href_modifier: Optional[ReadHrefModifier] = None) -> pystac.Item:
     """Creates a STAC item for land use tiles that have been converted to COGs
 
     Args:
@@ -169,7 +170,8 @@ def create_item(
         pystac.Item: STAC Item object.
     """
     metadata = get_metadata(metadata_url)
-    bbox, transform, shape = get_raster_metadata(cog_href)
+    bbox, transform, shape = get_raster_metadata(
+        cog_href_modifier(cog_href) if cog_href_modifier else cog_href)
     extent_geometry = bounds_to_geojson(bbox, metadata.epsg)
 
     # Ensure a year can be retrieved from the path
@@ -250,7 +252,9 @@ def create_item(
         "summary": summary
     } for value, summary in CLASSIFICATION_VALUES.items()]
     cog_asset_file.values = mapping
-    with fsspec.open(cog_href) as file:
+    with fsspec.open(
+            cog_href_modifier(cog_href) if cog_href_modifier else cog_href
+    ) as file:
         size = file.size
         if size is not None:
             cog_asset_file.size = size
