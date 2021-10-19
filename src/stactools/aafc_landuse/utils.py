@@ -11,7 +11,6 @@ from pyproj.transformer import Transformer
 from shapely import geometry
 from shapely.geometry import mapping as geojson_mapping
 
-from stactools.aafc_landuse import data_dir
 
 class StacMetadata(SimpleNamespace):
     """AAFC Land Use Stac Metadata namespace"""

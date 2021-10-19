@@ -73,6 +73,7 @@ def create_aafclanduse_command(cli):
         collection = stac.create_collection(metadata, thumbnail)
 
         # Set the destination
+        output_path = os.path.join(destination, "collection.json")
         collection.set_self_href(output_path)
         collection.normalize_hrefs(destination)
 
@@ -115,6 +116,8 @@ def create_aafclanduse_command(cli):
         item = stac.create_item(cog, metadata)
 
         # Set the href, save, and validate
+        output_path = os.path.join(destination,
+                                   os.path.basename(cog)[:-4] + ".json")
         item.set_self_href(output_path)
         item.make_asset_hrefs_relative()
         item.save_object()
