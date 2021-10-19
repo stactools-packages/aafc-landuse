@@ -2,6 +2,7 @@ import json
 import os
 from datetime import datetime, timezone
 from types import SimpleNamespace
+from typing import Tuple
 
 import rasterio
 import requests
@@ -85,7 +86,7 @@ def get_metadata(metadata_path: str) -> StacMetadata:
     return stac_metadata
 
 
-def get_raster_metadata(raster_path: str) -> tuple[list, list, list]:
+def get_raster_metadata(raster_path: str) -> Tuple[list, list, list]:
     with rasterio.open(raster_path) as dataset:
         bbox = list(dataset.bounds)
         transform = list(dataset.transform)
