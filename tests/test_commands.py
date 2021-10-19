@@ -15,7 +15,7 @@ class CreateItemTest(CliTestCase):
     def test_create_collection(self):
         with TemporaryDirectory() as tmp_dir:
             result = self.run_command(
-                ["aafclanduse", "create-collection", "-d", tmp_dir])
+                ["aafclanduse", "create-collection", tmp_dir])
             self.assertEqual(result.exit_code,
                              0,
                              msg="\n{}".format(result.output))
@@ -28,6 +28,11 @@ class CreateItemTest(CliTestCase):
             collection.validate()
 
     def test_create_cog_and_item(self):
+        test_path = test_data.get_path("data-files")
+        test_tif = next((os.path.join(test_path, d)
+                         for d in os.listdir(test_path)
+                         if d.lower().endswith(".tif")))
+
         with TemporaryDirectory() as tmp_dir:
             test_path = test_data.get_path("data-files")
             test_path = next((os.path.join(test_path, f)
