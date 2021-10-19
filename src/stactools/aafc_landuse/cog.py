@@ -14,13 +14,11 @@ def create_cog(source: str, destination: str):
     cog_name = os.path.basename(source)[:-4] + "_cog.tif"
     cog_destination = os.path.join(destination, cog_name)
 
-    match = re.search(r"\d{4}", cog_name)
+    # Ensure a year can be extracted from the path
+    match = re.search(r"LU\d{4}", cog_name)
     if not match:
         raise ValueError(
             "The source .tif should originate from the source AAFC " +
             "data so a year may be extracted from the name")
-
-    if match.group() not in ["1990", "2000", "2010"]:
-        raise ValueError("Expected one of 1990, 2000, or 2010")
 
     cogify(source, cog_destination, ["-co", "compress=LZW"])

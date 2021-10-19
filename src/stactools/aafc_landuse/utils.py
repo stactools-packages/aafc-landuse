@@ -1,113 +1,103 @@
 import json
 import os
-import shutil
-from tempfile import gettempdir
-from typing import Any
-from uuid import uuid1
-from zipfile import ZipFile
+from dateutil.parser import parse
+from datetime import datetime, timezone
+from types import SimpleNamespace
+from pyproj.transformer import Transformer
 
 import requests
+import rasterio
+from shapely import geometry
+from shapely.geometry import mapping as geojson_mapping
+from pyproj import CRS
 
 
-def get_metadata(metadata_url: str) -> dict:
-    """Gets metadata from a jsonld published by AAFC
-    Args:
-        metadata_url (str): url to get metadata from.
-    Returns:
-        dict: AAFC Land Use Metadata.
-    """
-    if metadata_url.endswith(".jsonld"):
-        if metadata_url.startswith("http"):
-            metadata_response = requests.get(metadata_url)
-            jsonld_response = metadata_response.json()
-        else:
-            with open(metadata_url) as f:
-                jsonld_response = json.load(f)
+class StacMetadata(SimpleNamespace):
+    """AAFC Land Use Stac Metadata namespace"""
 
-        geom_obj = next(
-            (x["locn:geometry"] for x in jsonld_response["@graph"]
-             if "locn:geometry" in x.keys()),
-            [],
-        )  # type: Any
-        geom_metadata = next(
-            (json.loads(x["@value"])
-             for x in geom_obj if x["@type"].startswith("http")),
-            None,
-        )
-        if not geom_metadata:
-            raise ValueError("Unable to parse geometry metadata from jsonld")
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-        description_metadata = [
-            i for i in jsonld_response.get("@graph")
-            if "dct:description" in i.keys()
-        ][0]
-
-        metadata = {
-            "geom_metadata": geom_metadata,
-            "description_metadata": description_metadata,
-        }
-
-        return metadata
-    else:
-        # only jsonld support.
-        raise NotImplementedError()
-
-
-class AssetManager:
-    """Manage an asset as a local file, or temporary local file if a url is provided
-    """
-    def __init__(self, src: str):
-        if os.path.splitext(src)[1].lower() not in [".tif", ".zip"]:
-            raise ValueError("Asset is expected to be .tif or .zip")
-
-        # Create a temporary working directory
-        self.src = src
-        self.wkdir = os.path.join(gettempdir(), str(uuid1()))
-        os.mkdir(self.wkdir)
-
-        if os.path.isfile(src):
-            self.path = self.extract_and_find(self.src)
-        else:
-            dl_path = self.collect_remote_asset()
-            self.path = self.extract_and_find(dl_path)
-
-    def collect_remote_asset(self):
-        """Download the asset
-        """
-        # Download the asset
-        dl = os.path.join(self.wkdir, os.path.basename(self.src))
-        with open(dl, "wb") as af:
-            af.write(requests.get(self.src).content)
-
-        return dl
-
-    def extract_and_find(self, src: str):
-        """Extract an asset if needed and traverse to find the first .tif
+    @staticmethod
+    def get_datetime(dt_text: str) -> datetime:
+        """Parse a string into a datetime in UTC
 
         Args:
-            src (str): Path to the asset
+            dt_text (str): Date/time text to parse
 
         Returns:
-            str: Path to the first .tif encountered
+            datetime: Datetime object in the UTC timezone
         """
-        if os.path.splitext(src)[1].lower() == ".zip":
-            with ZipFile(src, "r") as zf:
-                zf.extractall(self.wkdir)
+        return parse(dt_text).astimezone(timezone.utc)
 
-            for p, _, contents in os.walk(self.wkdir):
-                for c in contents:
-                    if os.path.splitext(c)[1].lower() == ".tif":
-                        return os.path.join(p, c)
+    @staticmethod
+    def get_bbox(geojson: str) -> list:
+        """Parse a goejson string and collect a shapely polygon
 
-            raise FileNotFoundError("No .tif files in asset source")
-        else:
-            return src
+        Args:
+            geojson (str): Geojson string (can be parsed with loads)
 
-    def __enter__(self):
-        return self
+        Returns:
+            Polygon: Shapely polygon instance
+        """
+        return list(geometry.shape(json.loads(geojson)).bounds)
 
-    def __exit__(self, exc_type, exc_value, exc_traceback):
-        try:
-            shutil.rmtree(self.wkdir)
-        except FileNotFoundError:
-            pass
+
+def get_metadata(metadata_path: str) -> StacMetadata:
+    """Collect remote metadata published by AAFC
+
+    Args:
+        metadata_path (str): Local path or href to metadata json.
+
+    Returns:
+        dict: AAFC Land Use Metadata for use in
+        `stac.create_collection` and `stac.create_item`
+    """
+    stac_metadata = StacMetadata()
+
+    if os.path.isfile(metadata_path):
+        with open(metadata_path) as f:
+            remote_metadata = json.load(f)
+    else:
+        metadata_response = requests.get(metadata_path)
+        remote_metadata = metadata_response.json()["result"]
+
+    stac_metadata.title = remote_metadata["title"]
+    stac_metadata.description = remote_metadata["notes"]
+    stac_metadata.provider = remote_metadata["organization"]["title"]
+    stac_metadata.license_id = remote_metadata["license_id"]
+    stac_metadata.license_title = remote_metadata["license_title"]
+    stac_metadata.license_url = remote_metadata["license_url"]
+
+    # Temporal extent
+    stac_metadata.datetime_start = stac_metadata.get_datetime(
+        remote_metadata["time_period_coverage_start"]
+    )
+    stac_metadata.datetime_end = stac_metadata.get_datetime(
+        remote_metadata["time_period_coverage_end"]
+    )
+
+    # Bounding box
+    stac_metadata.bbox_polygon = stac_metadata.get_bbox(remote_metadata["spatial"])
+
+    # CRS
+    stac_metadata.epsg = int(remote_metadata["reference_system_information"][5:10])
+
+    return stac_metadata
+
+
+def get_raster_metadata(raster_path: str) -> tuple[list, list, list]:
+    with rasterio.open(raster_path) as dataset:
+        bbox = list(dataset.bounds)
+        transform = list(dataset.transform)
+        shape = [dataset.height, dataset.width]
+
+    return bbox, transform, shape
+
+
+def bounds_to_geojson(bbox: list, in_crs: int) -> dict:
+    transformer = Transformer.from_crs(
+        CRS.from_epsg(in_crs), CRS.from_epsg(4326), always_xy=True
+    )
+    bbox = list(transformer.transform_bounds(*bbox))
+    return geojson_mapping(geometry.box(*bbox, ccw=True))
