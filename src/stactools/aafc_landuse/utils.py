@@ -1,20 +1,19 @@
 import json
 import os
-from dateutil.parser import parse
 from datetime import datetime, timezone
 from types import SimpleNamespace
-from pyproj.transformer import Transformer
 
-import requests
 import rasterio
+import requests
+from dateutil.parser import parse
+from pyproj import CRS
+from pyproj.transformer import Transformer
 from shapely import geometry
 from shapely.geometry import mapping as geojson_mapping
-from pyproj import CRS
 
 
 class StacMetadata(SimpleNamespace):
     """AAFC Land Use Stac Metadata namespace"""
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -71,17 +70,17 @@ def get_metadata(metadata_path: str) -> StacMetadata:
 
     # Temporal extent
     stac_metadata.datetime_start = stac_metadata.get_datetime(
-        remote_metadata["time_period_coverage_start"]
-    )
+        remote_metadata["time_period_coverage_start"])
     stac_metadata.datetime_end = stac_metadata.get_datetime(
-        remote_metadata["time_period_coverage_end"]
-    )
+        remote_metadata["time_period_coverage_end"])
 
     # Bounding box
-    stac_metadata.bbox_polygon = stac_metadata.get_bbox(remote_metadata["spatial"])
+    stac_metadata.bbox_polygon = stac_metadata.get_bbox(
+        remote_metadata["spatial"])
 
     # CRS
-    stac_metadata.epsg = int(remote_metadata["reference_system_information"][5:10])
+    stac_metadata.epsg = int(
+        remote_metadata["reference_system_information"][5:10])
 
     return stac_metadata
 
@@ -96,8 +95,8 @@ def get_raster_metadata(raster_path: str) -> tuple[list, list, list]:
 
 
 def bounds_to_geojson(bbox: list, in_crs: int) -> dict:
-    transformer = Transformer.from_crs(
-        CRS.from_epsg(in_crs), CRS.from_epsg(4326), always_xy=True
-    )
+    transformer = Transformer.from_crs(CRS.from_epsg(in_crs),
+                                       CRS.from_epsg(4326),
+                                       always_xy=True)
     bbox = list(transformer.transform_bounds(*bbox))
     return geojson_mapping(geometry.box(*bbox, ccw=True))

@@ -1,39 +1,32 @@
 import logging
-import re
 import os
+import re
 from datetime import datetime, timezone
 from typing import Any, List
 
 import fsspec
 import pystac
-from pystac.provider import Provider, ProviderRole
-from pystac.link import Link
 from pystac.extensions.file import FileExtension
 from pystac.extensions.item_assets import AssetDefinition, ItemAssetsExtension
-from pystac.extensions.label import LabelClasses, LabelExtension, LabelTask, LabelType
+from pystac.extensions.label import (LabelClasses, LabelExtension, LabelTask,
+                                     LabelType)
 from pystac.extensions.projection import ProjectionExtension
-from pystac.extensions.raster import DataType, RasterBand, RasterExtension, Sampling
+from pystac.extensions.raster import (DataType, RasterBand, RasterExtension,
+                                      Sampling)
+from pystac.link import Link
+from pystac.provider import Provider, ProviderRole
 
-from stactools.aafc_landuse.utils import (
-    get_metadata,
-    get_raster_metadata,
-    bounds_to_geojson,
-)
-from stactools.aafc_landuse.constants import (
-    KEYWORDS,
-    LANDUSE_ID,
-    METADATA_URL,
-    THUMBNAIL_URL,
-    PROVIDER_URL,
-    CLASSIFICATION_VALUES,
-)
+from stactools.aafc_landuse.constants import (CLASSIFICATION_VALUES, KEYWORDS,
+                                              LANDUSE_ID, METADATA_URL,
+                                              PROVIDER_URL, THUMBNAIL_URL)
+from stactools.aafc_landuse.utils import (bounds_to_geojson, get_metadata,
+                                          get_raster_metadata)
 
 logger = logging.getLogger(__name__)
 
 
-def create_collection(
-    metadata_url: str = METADATA_URL, thumbnail_url: str = THUMBNAIL_URL
-) -> pystac.Collection:
+def create_collection(metadata_url: str = METADATA_URL,
+                      thumbnail_url: str = THUMBNAIL_URL) -> pystac.Collection:
     """Create a STAC Collection using AAFC Land Use metadata
 
     Args:
@@ -57,7 +50,8 @@ def create_collection(
 
     extent = pystac.Extent(
         pystac.SpatialExtent([metadata.bbox_polygon]),
-        pystac.TemporalExtent([[metadata.datetime_start, metadata.datetime_end]]),
+        pystac.TemporalExtent(
+            [[metadata.datetime_start, metadata.datetime_end]]),
     )
 
     collection = pystac.Collection(
@@ -72,8 +66,9 @@ def create_collection(
     )
 
     collection.add_link(
-        Link(rel="license", target=metadata.license_url, title=metadata.license_title)
-    )
+        Link(rel="license",
+             target=metadata.license_url,
+             title=metadata.license_title))
 
     # Add the metadata url and thumbnail url as assets
     collection.add_asset(
@@ -95,7 +90,8 @@ def create_collection(
         ),
     )
 
-    collection_label = LabelExtension.summaries(collection, add_if_missing=True)
+    collection_label = LabelExtension.summaries(collection,
+                                                add_if_missing=True)
     collection_label.label_type = [LabelType.RASTER]
     collection_label.label_tasks = [LabelTask.CLASSIFICATION]
     collection_label.label_properties = None
@@ -107,48 +103,62 @@ def create_collection(
         LabelClasses.create(list(CLASSIFICATION_VALUES.values()), "")
     ]
 
-    collection_proj = ProjectionExtension.summaries(collection, add_if_missing=True)
+    collection_proj = ProjectionExtension.summaries(collection,
+                                                    add_if_missing=True)
     collection_proj.epsg = [metadata.epsg]
 
-    collection_item_asset = ItemAssetsExtension.ext(collection, add_if_missing=True)
+    collection_item_asset = ItemAssetsExtension.ext(collection,
+                                                    add_if_missing=True)
     collection_item_asset.item_assets = {
-        "metadata": AssetDefinition(
+        "metadata":
+        AssetDefinition(
             dict(
                 type=pystac.MediaType.JSON,
                 roles=["metadata"],
                 title="AAFC Land Use metadata",
-            )
-        ),
-        "landuse": AssetDefinition(
-            {
-                "type": pystac.MediaType.COG,
-                "roles": ["data", "labels", "labels-raster",],
-                "title": "AAFC Land Use COG",
-                "raster:bands": [
-                    RasterBand.create(
-                        nodata=0,
-                        sampling=Sampling.AREA,
-                        data_type=DataType.UINT8,
-                        spatial_resolution=30,
-                    ).to_dict()
-                ],
-                "file:values": [
-                    {"values": [value], "summary": summary}
-                    for value, summary in CLASSIFICATION_VALUES.items()
-                ],
-                "label:type": collection_label.label_type[0],
-                "label:tasks": collection_label.label_tasks,
-                "label:properties": None,
-                "label:classes": [collection_label.label_classes[0].to_dict()],
-                "proj:epsg": metadata.epsg,
-            }
-        ),
+            )),
+        "landuse":
+        AssetDefinition({
+            "type":
+            pystac.MediaType.COG,
+            "roles": [
+                "data",
+                "labels",
+                "labels-raster",
+            ],
+            "title":
+            "AAFC Land Use COG",
+            "raster:bands": [
+                RasterBand.create(
+                    nodata=0,
+                    sampling=Sampling.AREA,
+                    data_type=DataType.UINT8,
+                    spatial_resolution=30,
+                ).to_dict()
+            ],
+            "file:values": [{
+                "values": [value],
+                "summary": summary
+            } for value, summary in CLASSIFICATION_VALUES.items()],
+            "label:type":
+            collection_label.label_type[0],
+            "label:tasks":
+            collection_label.label_tasks,
+            "label:properties":
+            None,
+            "label:classes": [collection_label.label_classes[0].to_dict()],
+            "proj:epsg":
+            metadata.epsg,
+        }),
     }
 
     return collection
 
 
-def create_item(cog_href: str, metadata_url: str = METADATA_URL,) -> pystac.Item:
+def create_item(
+    cog_href: str,
+    metadata_url: str = METADATA_URL,
+) -> pystac.Item:
     """Creates a STAC item for land use tiles that have been converted to COGs
 
     Args:
@@ -168,8 +178,7 @@ def create_item(cog_href: str, metadata_url: str = METADATA_URL,) -> pystac.Item
     if not match:
         raise ValueError(
             "The source .tif should originate from a cog created using a source AAFC "
-            + "Land Use GeoTiff"
-        )
+            + "Land Use GeoTiff")
     year = int(match.group()[2:])
     datetime_start = datetime(year, 1, 1, tzinfo=timezone.utc)
     datetime_end = datetime(year, 12, 31, tzinfo=timezone.utc)
@@ -236,10 +245,10 @@ def create_item(cog_href: str, metadata_url: str = METADATA_URL,) -> pystac.Item
 
     # File Extension
     cog_asset_file = FileExtension.ext(cog_asset, add_if_missing=True)
-    mapping: List[Any] = [
-        {"values": [value], "summary": summary}
-        for value, summary in CLASSIFICATION_VALUES.items()
-    ]
+    mapping: List[Any] = [{
+        "values": [value],
+        "summary": summary
+    } for value, summary in CLASSIFICATION_VALUES.items()]
     cog_asset_file.values = mapping
     with fsspec.open(cog_href) as file:
         size = file.size
@@ -258,7 +267,8 @@ def create_item(cog_href: str, metadata_url: str = METADATA_URL,) -> pystac.Item
     ]
 
     # Complete the projection extension
-    cog_asset_projection = ProjectionExtension.ext(cog_asset, add_if_missing=True)
+    cog_asset_projection = ProjectionExtension.ext(cog_asset,
+                                                   add_if_missing=True)
     cog_asset_projection.epsg = item_projection.epsg
     cog_asset_projection.bbox = item_projection.bbox
     cog_asset_projection.transform = item_projection.transform

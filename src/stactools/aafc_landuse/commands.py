@@ -13,15 +13,16 @@ def create_aafclanduse_command(cli):
     """Creates a command line utility for working with
     AAFC Land Use categorical rasters
     """
-
     @cli.group(
-        "aafclanduse", short_help=("Commands for working with AAFC Land Use data"),
+        "aafclanduse",
+        short_help=("Commands for working with AAFC Land Use data"),
     )
     def aafclanduse():
         pass
 
     @aafclanduse.command(
-        "create-cog", short_help="Creates a COG from an AAFC Land Use .tif",
+        "create-cog",
+        short_help="Creates a COG from an AAFC Land Use .tif",
     )
     @click.argument("source")
     @click.argument("destination")
@@ -45,7 +46,10 @@ def create_aafclanduse_command(cli):
         help="The output directory for the STAC Collection json",
     )
     @click.option(
-        "-m", "--metadata", help="URL to the AAFC metadata json", default=METADATA_URL,
+        "-m",
+        "--metadata",
+        help="URL to the AAFC metadata json",
+        default=METADATA_URL,
     )
     @click.option(
         "-t",
@@ -53,7 +57,8 @@ def create_aafclanduse_command(cli):
         help="URL to a collection thumbnail",
         default=THUMBNAIL_URL,
     )
-    def create_collection_command(destination: str, metadata: str, thumbnail: str):
+    def create_collection_command(destination: str, metadata: str,
+                                  thumbnail: str):
         """Creates a STAC Collection from AAFC Land Use metadata
 
         Args:
@@ -76,7 +81,8 @@ def create_aafclanduse_command(cli):
         collection.validate()
 
     @aafclanduse.command(
-        "create-item", short_help="Create a STAC item from an AAFC Land Use tif",
+        "create-item",
+        short_help="Create a STAC item from an AAFC Land Use tif",
     )
     @click.option("-c", "--cog", required=True, help="COG href")
     @click.option(
@@ -109,7 +115,8 @@ def create_aafclanduse_command(cli):
         item = stac.create_item(cog, metadata)
 
         # Set the href, save, and validate
-        output_path = os.path.join(destination, os.path.basename(cog)[:-4] + ".json")
+        output_path = os.path.join(destination,
+                                   os.path.basename(cog)[:-4] + ".json")
         item.set_self_href(output_path)
         item.make_asset_hrefs_relative()
         item.save_object()

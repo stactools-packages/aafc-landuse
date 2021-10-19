@@ -1,7 +1,7 @@
-import unittest
 import os
-from tempfile import TemporaryDirectory
 import re
+import unittest
+from tempfile import TemporaryDirectory
 
 from pystac.utils import datetime_to_str
 
@@ -55,8 +55,7 @@ class StacTest(unittest.TestCase):
         with TemporaryDirectory() as tmp_dir:
             test_path = test_data.get_path("data-files")
             paths = [
-                os.path.join(test_path, d)
-                for d in os.listdir(test_path)
+                os.path.join(test_path, d) for d in os.listdir(test_path)
                 if d.lower().endswith(".tif")
             ]
 
@@ -66,11 +65,8 @@ class StacTest(unittest.TestCase):
                 cog_name = os.path.basename(path)[:-4] + "_cog.tif"
 
                 cog_path = next(
-                    (
-                        os.path.join(tmp_dir, f)
-                        for f in os.listdir(tmp_dir)
-                        if f == cog_name
-                    ),
+                    (os.path.join(tmp_dir, f)
+                     for f in os.listdir(tmp_dir) if f == cog_name),
                     None,
                 )
                 self.assertIsNotNone(cog_path)
