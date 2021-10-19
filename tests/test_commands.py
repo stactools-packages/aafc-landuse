@@ -15,12 +15,12 @@ class CreateItemTest(CliTestCase):
     def test_create_collection(self):
         with TemporaryDirectory() as tmp_dir:
             result = self.run_command(
-                ["aafclanduse", "create-collection", tmp_dir])
+                ["aafclanduse", "create-collection", "-d", tmp_dir])
             self.assertEqual(result.exit_code,
                              0,
                              msg="\n{}".format(result.output))
 
-            jsons = [p for p in os.listdir(tmp_dir) if p.endswith(".json")]
+            jsons = [p for p in os.listdir(tmp_dir) if p == "collection.json"]
             self.assertEqual(len(jsons), 1)
 
             collection = pystac.read_file(os.path.join(tmp_dir, jsons[0]))
@@ -28,31 +28,25 @@ class CreateItemTest(CliTestCase):
             collection.validate()
 
     def test_create_cog_and_item(self):
-        test_path = test_data.get_path("data-files")
-        test_tif = next((os.path.join(test_path, d)
-                         for d in os.listdir(test_path)
-                         if d.lower().endswith(".tif")))
-
         with TemporaryDirectory() as tmp_dir:
+            test_path = test_data.get_path("data-files")
+            test_path = next((os.path.join(test_path, f)
+                              for f in os.listdir(test_path)
+                              if f.lower().endswith(".tif")))
+
             # Create a COG and item
             result = self.run_command(
-                ["aafclanduse", "create-cog", test_tif, tmp_dir])
+                ["aafclanduse", "create-cog", test_path, tmp_dir])
             self.assertEqual(result.exit_code,
                              0,
                              msg="\n{}".format(result.output))
 
             cog_path = os.path.join(
                 tmp_dir,
-                os.path.basename(test_tif)[:-4] + "_cog.tif")
-
+                os.path.basename(test_path)[:-4] + "_cog.tif")
             self.assertTrue(os.path.isfile(cog_path))
 
-            cmd = [
-                "aafclanduse",
-                "create-item",
-                tmp_dir,
-                cog_path,
-            ]
+            cmd = ["aafclanduse", "create-item", "-c", cog_path, "-d", tmp_dir]
             result = self.run_command(cmd)
             self.assertEqual(result.exit_code,
                              0,

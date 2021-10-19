@@ -1,16 +1,18 @@
+import os
+import re
 import unittest
+from tempfile import TemporaryDirectory
 
 from pystac.utils import datetime_to_str
 
-from stactools.aafc_landuse import stac, utils
+from stactools.aafc_landuse import cog, stac
+from tests import test_data
 
 
 class StacTest(unittest.TestCase):
     def test_create_collection(self):
-        metadata = utils.get_metadata()
-
         # Create stac collection
-        collection = stac.create_collection(metadata, 'collection.json')
+        collection = stac.create_collection()
         collection.set_self_href("mock-path")
 
         item_asset = collection.extra_fields["item_assets"]["landuse"]
@@ -49,34 +51,51 @@ class StacTest(unittest.TestCase):
 
         collection.validate()
 
-    def test_create_item(self):
-        """Create a test item
+    def test_create_cog_and_item(self):
+        with TemporaryDirectory() as tmp_dir:
+            test_path = test_data.get_path("data-files")
+            paths = [
+                os.path.join(test_path, d) for d in os.listdir(test_path)
+                if d.lower().endswith(".tif")
+            ]
 
-        :Note: `cog` is an optional parameter and is tested separately in `test_commands`
+            for path in paths:
+                cog.create_cog(path, tmp_dir)
 
-        """
-        metadata = utils.get_metadata()
-        metadata["title"] = "IMG_AAFC_LANDUSE_Z07_2010"
+                cog_name = os.path.basename(path)[:-4] + "_cog.tif"
 
-        # Create stac item
-        item = stac.create_item(metadata, 'item.json')
-        item.set_self_href("mock-path")
+                cog_path = next(
+                    (os.path.join(tmp_dir, f)
+                     for f in os.listdir(tmp_dir) if f == cog_name),
+                    None,
+                )
+                self.assertIsNotNone(cog_path)
 
-        self.assertEqual("IMG_AAFC_LANDUSE_Z07_2010", item.id)
-        self.assertEqual("IMG_AAFC_LANDUSE_Z07_2010", item.properties["title"])
-        self.assertEqual("2010-01-01T00:00:00Z",
-                         datetime_to_str(item.common_metadata.start_datetime))
+                item = stac.create_item(cog_path)
 
-        self.assertIn("metadata", item.assets)
+                item.set_self_href("mock-path")
 
-        # Base Projection Extension
-        self.assertIn("proj:epsg", item.properties)
+                cog_id = os.path.basename(cog_path)[:-4]
+                year = int(re.search(r"LU\d{4}", cog_id).group()[2:])
+                title = f"The {year} AAFC Land Use Maps - {cog_id}"
 
-        # Base Label Extension
-        self.assertIn("label:type", item.properties)
-        self.assertIn("label:tasks", item.properties)
-        self.assertIn("label:properties", item.properties)
-        self.assertIn("label:description", item.properties)
-        self.assertIn("label:classes", item.properties)
+                self.assertEqual(cog_id, item.id)
+                self.assertEqual(title, item.properties["title"])
+                self.assertEqual(
+                    f"{year}-01-01T00:00:00Z",
+                    datetime_to_str(item.common_metadata.start_datetime),
+                )
 
-        item.validate()
+                self.assertIn("metadata", item.assets)
+
+                # Base Projection Extension
+                self.assertIn("proj:epsg", item.properties)
+
+                # Base Label Extension
+                self.assertIn("label:type", item.properties)
+                self.assertIn("label:tasks", item.properties)
+                self.assertIn("label:properties", item.properties)
+                self.assertIn("label:description", item.properties)
+                self.assertIn("label:classes", item.properties)
+
+                item.validate()
